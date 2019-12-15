@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import imutil
+import imutils
 
 img = cv2.imread("tests/test_sample1.jpg", 1)
 # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
@@ -40,10 +40,14 @@ cv2.drawContours(mask, contours_rect, -1, (0, 255, 0), 1)
 cv2.imshow("mask red squares", mask)
 largest_square_contour = sorted(contours_rect, key=cv2.contourArea, reverse=True)[0]
 mask = np.zeros(img.shape, np.uint8)
-cv2.drawContours(mask, [largest_square_contour], -1, (0, 255, 0), 1)
+cv2.drawContours(mask, [largest_square_contour], -1, (0, 0, 255), 1)
 cv2.imshow("largest red square", mask)
-x, y, w, h = cv2.boundingRect(contours[0])
 
+_, (width, height), angle = cv2.minAreaRect(largest_square_contour)
+x, y, w, h = cv2.boundingRect(contours[0])
+# # make the angle in the [0, 180) range *-ve
+# if width < height:
+#     angle = angle - 90
 # cv2.imshow("cnt", contours[0])
 cv2.waitKey(0)
 cv2.destroyAllWindows()
