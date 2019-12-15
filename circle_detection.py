@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
+import math
 ROW_DIFF = np.uint16(15)
-src = cv2.imread("tests/test_sample1.jpg", 1)
+src = cv2.imread("tests/test_sample11.jpg", 1)
 # src = cv.resize(src, (800, 1200))
 gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
 contours, hierarchy = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -17,12 +18,12 @@ height, width = thresh.shape
 eroded_thresh = eroded_thresh[height // 4:height, width // 2:width]
 img_display = src[height // 4:height, width // 2:width]
 
-circles = cv2.HoughCircles(eroded_thresh, cv2.HOUGH_GRADIENT, 1, 10,
+black_circles = cv2.HoughCircles(eroded_thresh, cv2.HOUGH_GRADIENT, 1, 10,
                            param1=10, param2=11,
                            minRadius=1, maxRadius=15)
 
 thresh = thresh[height // 4:height, width // 2:width]
-circles2 = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, 1, 10,
+mixed_circles = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, 1, 10,
                             param1=10, param2=15,
                             minRadius=9, maxRadius=15)
 
@@ -43,27 +44,14 @@ def loop_circles(circles):
 
 all_centers_XandY = []
 
-loop_circles(circles)
-loop_circles(circles2)
+loop_circles(black_circles)
+loop_circles(mixed_circles)
 
 cv2.namedWindow("detected circles", cv2.WINDOW_NORMAL)
 cv2.imshow("detected circles", src)
 cv2.imwrite("detected circles.jpg", img_display)
 cv2.imwrite("thresh.jpg", thresh)
 cv2.waitKey(0)
-
-# todo
-# 1. sort list of all detected circles based on x
-# 2. get max_x, min_x
-# 3. define span as (max_x - min_x) / 5
-# loop over black_circles
-#   ans_num = (circle.x - min.x) / span
-centers_sorted_by_x = sorted(all_centers_XandY, key=lambda circle : circle[0])
-max_x = centers_sorted_by_x[-1][0]
-min_x = centers_sorted_by_x[0][0]
-span = (max_x - min_x) / 5
-
-
 
 # todo
 # sort all circles 7asab el y
@@ -82,11 +70,39 @@ for y in centers_sorted_by_y:
         last_y = y
 # last y feha el y's bta3et kol row we sorted kman shoft ba2a el 7lawa
 
-print(questions_y_list)
-print(len(questions_y_list))
+
+# todo
+# 1. sort list of all detected circles based on x
+# 2. get max_x, min_x
+# 3. define span as (max_x - min_x) / 5
+
+centers_sorted_by_x = sorted(all_centers_XandY, key=lambda circle : circle[0])
+max_x = centers_sorted_by_x[-1][0]
+min_x = centers_sorted_by_x[0][0]
+span = (max_x - min_x) / 5
+# loop over black_circles
+#   ans_num = (circle.x - min.x) / span
+#
+answers = []
+# print(type(black_circles))
+black_circles = black_circles.tolist()[0]
+# print(type(black_circles))
+
+black_circles.sort(key=lambda circle: circle[1])
+c = 0
+# print(len(black_circles))
+for y in questions_y_list:
+    ans_num = (black_circles[c][0] - min_x) / span
+    # print(f"min: {min_x}, max: {max_x}, span: {span}, reg: {max_x - min_x}")
+    # print(f"x{c}: {black_circles[c][0]}, y: {black_circles[c][1]}")
+    if abs(y - black_circles[c][1]) < 5:
+        answers.append(int(1 + math.floor(ans_num)))
+        c = c + 1
+    else:
+        answers.append("Unanswered")
 
 
+print(answers)
 
-
-
-# use black lines to mark circle_y
+# todo
+# nafs elli ta7t ne3mlo fo2
