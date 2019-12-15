@@ -69,23 +69,21 @@ span = (max_x - min_x) / 5
 # sort all circles 7asab el y
 
 centers_sorted_by_y = sorted(all_centers_XandY, key=lambda circle: circle[1])
-centers_sorted_by_y = [center[1] for center in centers_sorted_by_y]
-y_list = [centers_sorted_by_y[0]]
+centers_sorted_by_y = [(center[1]) for center in centers_sorted_by_y]
+questions_y_list = [centers_sorted_by_y[0]]
 last_y = centers_sorted_by_y[0]
-print(type(last_y))
+
 for y in centers_sorted_by_y:
-    # print(type(y))
-    y_diff = np.uint16(last_y - y)
-    print(y_diff)
+    y_diff = y - last_y
     if y_diff < ROW_DIFF:
         continue
     else:
-        y_list.append(y)
+        questions_y_list.append(y)
         last_y = y
 # last y feha el y's bta3et kol row we sorted kman shoft ba2a el 7lawa
 
-print(y_list)
-print(len(y_list))
+print(questions_y_list)
+print(len(questions_y_list))
 
 
 
