@@ -3,6 +3,7 @@ import numpy as np
 import math
 import imutils
 import unittest
+import json
 
 ROW_DIFF = np.uint16(15)
 LOWER_RED = np.array([160, 50, 50])
@@ -206,6 +207,8 @@ def main(img_num):
     # hnege 3and ael one and nshof el mttkrara akbar or as8yar law as8yar yeb2a male else femal
 
     answers.extend([gender, semester])
+    with open('data.txt', 'a') as outfile:
+        json.dump({f"test_sample{img_num}.jpg": answers}, outfile, indent=4)
     return answers
 
 
