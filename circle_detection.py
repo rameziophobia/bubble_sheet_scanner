@@ -76,10 +76,6 @@ def main(img_num):
         else:
             answers.append("Unanswered")
 
-    # print(answers)
-    # print(answers2)
-
-
     eroded_thresh_upper = eroded_thresh[0:height // 4]
     thresh_upper = thresh[0:height // 4 - 20]
     img_display = src[0:height // 4]
@@ -98,7 +94,7 @@ def main(img_num):
     centers_sorted_by_y = sorted(get_circle_centers(all_circles_upper), key=lambda center: center[1])
 
     y_centers = []
-    x_centers = [(center[0]) for center in centers_sorted_by_y]
+    x_centers = [(round(center[0])) for center in centers_sorted_by_y]
     centers_sorted_by_y = [(center[1]) for center in centers_sorted_by_y]
 
     last_y = 0
@@ -116,17 +112,18 @@ def main(img_num):
     c = 0
 
     intcenters = np.array(centers_sorted_by_y)
-    intcenters - intcenters.astype(int)
+    intcenters = intcenters.astype(int)
 
     for y in intcenters:
         diff = y - last_y
-        if (diff < 5):
+        if diff < 5:
             unique_y_list[c] = unique_y_list[c] + 1
         else:
             last_y = y
             c = c + 1
             unique_y_list[c] = unique_y_list[c] + 1
 
+    gender = "no gender"
     if unique_y_list[0] == 3:
         gender_xVals = x_centers[0:3]
         gender_xVals.sort(key=lambda circle: circle)
@@ -134,10 +131,6 @@ def main(img_num):
             gender = "Female"
         else:
             gender = "Male"
-    else:
-        gender = "no gender"
-
-    print("Gender:", gender)
 
     def firstDuplicate(a):
         set_ = set()
@@ -147,22 +140,20 @@ def main(img_num):
             set_.add(item)
         return None
 
+    semester = "no semester"
     if unique_y_list[1] == 4:
         val1 = unique_y_list[0]
         semster_xVals = x_centers[val1:val1 + 4]
         semster_xVals.sort(key=lambda circle: circle)
         duplicate = firstDuplicate(semster_xVals)
-        
+
         semster_xVals.remove(duplicate)
         if duplicate == semster_xVals[0]:
-            semster = "Fall"
+            semester = "Fall"
         if duplicate == semster_xVals[1]:
-            semster = "Spring"
+            semester = "Spring"
         if duplicate == semster_xVals[2]:
-            semster = "Summer"
-    else:
-        semster = "no ans"
-    print("Semster: ", semster)
+            semester = "Summer"
 
     if unique_y_list[2] + unique_y_list[3] == 12:
         program_xVals = x_centers[unique_y_list[0] + unique_y_list[1] - 1:]
@@ -171,7 +162,6 @@ def main(img_num):
 
         dup = firstDuplicate(program_xVals)
         if unique_y_list[2] == 8:
-
             span = (program_xVals[-1] - min(program_xVals)) / 7
             ans_num = (dup - min(program_xVals)) / span
         # answers.append(int(1 + math.floor(ans_num)))
@@ -182,16 +172,8 @@ def main(img_num):
     # program = no ans
     # hnege 3and ael one and nshof el mttkrara akbar or as8yar law as8yar yeb2a male else femal
 
-    return answers.extend([semster])
-    cv2.imshow("ne", img_display)
-    cv2.imwrite("ne.jpeg", img_display)
-    cv2.waitKey(0)
-
-    # last todo
-    # 1. fix the qesution equation?
-    # 2. make the program
-    # 3. input img
-    # 4. output img
+    answers.extend([gender, semester])
+    return answers
 
 
 test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall"],
@@ -209,18 +191,10 @@ test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", 
 
 class TestAnswers(unittest.TestCase):
     def tests(self):
-        for i in range(1, 12):
-            if i == 8 or i == 9:
-                continue
+        for i in range(8, 12):
             with self.subTest(i=i):
                 self.assertEqual(main(i), test_ans[i - 1])
 
 
 if __name__ == '__main__':
-    # for i in range(1, 12):
-    #     if i == 8 or i == 9:
-    #         continue
-    #     main(i)
     unittest.main()
-# todo
-# nafs elli ta7t ne3mlo fo2
