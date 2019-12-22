@@ -17,21 +17,21 @@ def main(img_num):
     eroded_thresh = cv2.erode(thresh, circle_kernel)
 
     height, width = thresh.shape
-    eroded_thresh = eroded_thresh[height // 4:height, width // 2:width]
+    eroded_thresh_questions = eroded_thresh[height // 4:height, width // 2:width]
     img_display = src[height // 4:height, width // 2:width]
 
-    black_circles = cv2.HoughCircles(eroded_thresh, cv2.HOUGH_GRADIENT, 1, 10,
-                                     param1=10, param2=11,
-                                     minRadius=1, maxRadius=15)
+    black_circles_questions = cv2.HoughCircles(eroded_thresh_questions, cv2.HOUGH_GRADIENT, 1, 10,
+                                               param1=10, param2=11,
+                                               minRadius=1, maxRadius=15)
 
-    thresh = thresh[height // 4:height, width // 2:width]
-    mixed_circles = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, 1, 10,
-                                     param1=10, param2=15,
-                                     minRadius=9, maxRadius=15)
+    thresh_questions = thresh[height // 4:height, width // 2:width]
+    mixed_circles_questions = cv2.HoughCircles(thresh_questions, cv2.HOUGH_GRADIENT, 1, 10,
+                                               param1=10, param2=15,
+                                               minRadius=9, maxRadius=15)
 
-    # def get_circle_centers(circles):
-    #     if circles is not None:
-    #         return [(center[0], center[1]) for center in circles[0]]
+    def get_circle_centers(circles):
+        if circles is not None:
+            return [(center[0], center[1]) for center in circles]
 
     def get_centers_x_sorted(circles):
         if circles is not None:
@@ -41,11 +41,11 @@ def main(img_num):
         if circles is not None:
             return sorted([center[1] for center in circles])
 
-    all_circles = []
-    all_circles.extend(black_circles[0])
-    all_circles.extend(mixed_circles[0])
+    all_circles_questions = []
+    all_circles_questions.extend(black_circles_questions[0])
+    all_circles_questions.extend(mixed_circles_questions[0])
 
-    centers_sorted_by_y = get_centers_y_sorted(all_circles)
+    centers_sorted_by_y = get_centers_y_sorted(all_circles_questions)
     questions_y_list = [centers_sorted_by_y[0]]
     last_y = centers_sorted_by_y[0]
 
@@ -56,16 +56,15 @@ def main(img_num):
         else:
             questions_y_list.append(y)
             last_y = y
-    # last y feha el y's bta3et kol row we sorted kman shoft ba2a el 7lawa
 
-    centers_sorted_by_x = get_centers_x_sorted(all_circles)
+    centers_sorted_by_x = get_centers_x_sorted(all_circles_questions)
     max_x = centers_sorted_by_x[-1]
     min_x = centers_sorted_by_x[0]
     span = (max_x - min_x) / 5
 
     answers = []
     answers2 = []
-    black_circles = black_circles.tolist()[0]
+    black_circles = black_circles_questions.tolist()[0]
     black_circles.sort(key=lambda circle: circle[1])
     c = 0
     for y in questions_y_list:
@@ -79,20 +78,133 @@ def main(img_num):
 
     # print(answers)
     # print(answers2)
-    return answers
 
 
-test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3],
-            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2],
-            [2, 1, 3, 4, 2, 4, 4, 4, 2, 2, 1, 2, 1, 3, 1, 4, 3, 1, 2],
-            [1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 2, 2, 2, 4, 4, 4, 2, 2],
-            [1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 2, 1, 2, 3, 4, 5, 4, 2, 1],
-            [2, 3, 3, 2, 5, 5, 4, 1, 2, 1, 1, 1, 2, 4, 4, 1, 2, 2, 2],
-            [1, 3, 4, 1, 3, 2, 4, 3, 2, 3, 4, 5, 1, 5, 3, 1, 4, 1, 3],
-            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2],  # rotation
-            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1],  # rotation
-            [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1],
-            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3]]
+    eroded_thresh_upper = eroded_thresh[0:height // 4]
+    thresh_upper = thresh[0:height // 4 - 20]
+    img_display = src[0:height // 4]
+
+    black_circles_upper = cv2.HoughCircles(eroded_thresh_upper, cv2.HOUGH_GRADIENT, 1, 10,
+                                           param1=10, param2=11,
+                                           minRadius=9, maxRadius=15)
+    mixed_circles_upper = cv2.HoughCircles(thresh_upper, cv2.HOUGH_GRADIENT, 1, 10,
+                                           param1=10, param2=11,
+                                           minRadius=11, maxRadius=15)
+
+    all_circles_upper = []
+    all_circles_upper.extend(black_circles_upper[0])
+    all_circles_upper.extend(mixed_circles_upper[0])
+
+    centers_sorted_by_y = sorted(get_circle_centers(all_circles_upper), key=lambda center: center[1])
+
+    y_centers = []
+    x_centers = [(center[0]) for center in centers_sorted_by_y]
+    centers_sorted_by_y = [(center[1]) for center in centers_sorted_by_y]
+
+    last_y = 0
+    for y in centers_sorted_by_y:
+        y_diff = y - last_y
+        if y_diff < ROW_DIFF:
+            continue
+        else:
+            y_centers.append(y)
+            last_y = y
+
+    unique_y_list = [0] * 4
+
+    last_y = int(y_centers[0])
+    c = 0
+
+    intcenters = np.array(centers_sorted_by_y)
+    intcenters - intcenters.astype(int)
+
+    for y in intcenters:
+        diff = y - last_y
+        if (diff < 5):
+            unique_y_list[c] = unique_y_list[c] + 1
+        else:
+            last_y = y
+            c = c + 1
+            unique_y_list[c] = unique_y_list[c] + 1
+
+    if unique_y_list[0] == 3:
+        gender_xVals = x_centers[0:3]
+        gender_xVals.sort(key=lambda circle: circle)
+        if gender_xVals[1] == gender_xVals[2]:
+            gender = "Female"
+        else:
+            gender = "Male"
+    else:
+        gender = "no gender"
+
+    print("Gender:", gender)
+
+    def firstDuplicate(a):
+        set_ = set()
+        for item in a:
+            if item in set_:
+                return item
+            set_.add(item)
+        return None
+
+    if unique_y_list[1] == 4:
+        val1 = unique_y_list[0]
+        semster_xVals = x_centers[val1:val1 + 4]
+        semster_xVals.sort(key=lambda circle: circle)
+        duplicate = firstDuplicate(semster_xVals)
+        
+        semster_xVals.remove(duplicate)
+        if duplicate == semster_xVals[0]:
+            semster = "Fall"
+        if duplicate == semster_xVals[1]:
+            semster = "Spring"
+        if duplicate == semster_xVals[2]:
+            semster = "Summer"
+    else:
+        semster = "no ans"
+    print("Semster: ", semster)
+
+    if unique_y_list[2] + unique_y_list[3] == 12:
+        program_xVals = x_centers[unique_y_list[0] + unique_y_list[1] - 1:]
+
+        program_xVals.sort(key=lambda circle: circle)
+
+        dup = firstDuplicate(program_xVals)
+        if unique_y_list[2] == 8:
+
+            span = (program_xVals[-1] - min(program_xVals)) / 7
+            ans_num = (dup - min(program_xVals)) / span
+        # answers.append(int(1 + math.floor(ans_num)))
+        #  print(int(1 + math.floor(ans_num)))
+
+        # if(unique_y_list[3] == 4) #egaba in ta7t
+    # else:
+    # program = no ans
+    # hnege 3and ael one and nshof el mttkrara akbar or as8yar law as8yar yeb2a male else femal
+
+    return answers.extend([semster])
+    cv2.imshow("ne", img_display)
+    cv2.imwrite("ne.jpeg", img_display)
+    cv2.waitKey(0)
+
+    # last todo
+    # 1. fix the qesution equation?
+    # 2. make the program
+    # 3. input img
+    # 4. output img
+
+
+test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall"],
+            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Summer"],
+            [2, 1, 3, 4, 2, 4, 4, 4, 2, 2, 1, 2, 1, 3, 1, 4, 3, 1, 2, "Male", "Summer"],
+            [1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 2, 2, 2, 4, 4, 4, 2, 2, "Male", "Fall"],
+            [1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 2, 1, 2, 3, 4, 5, 4, 2, 1, "Male", "Fall"],
+            [2, 3, 3, 2, 5, 5, 4, 1, 2, 1, 1, 1, 2, 4, 4, 1, 2, 2, 2, "Female", "Fall"],
+            [1, 3, 4, 1, 3, 2, 4, 3, 2, 3, 4, 5, 1, 5, 3, 1, 4, 1, 3, "Female", "Fall"],
+            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Fall"],  # rotation
+            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Male", "Spring"],  # rotation
+            [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1, "Female", "Summer"],
+            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall"]]
 
 
 class TestAnswers(unittest.TestCase):
