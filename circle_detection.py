@@ -29,7 +29,6 @@ def main(img_num):
     if width < height:
         angle = angle - 90
 
-    print(angle)
     if 2 < abs(angle) < 178:
         angle = angle + 180 if abs(angle) < 5 else angle
         src = imutils.rotate(src, angle + 180)
@@ -110,7 +109,6 @@ def main(img_num):
     mixed_circles_upper = cv2.HoughCircles(thresh_upper, cv2.HOUGH_GRADIENT, 1, 10,
                                            param1=10, param2=11,
                                            minRadius=11, maxRadius=15)
-
     all_circles_upper = []
     all_circles_upper.extend(black_circles_upper[0])
     all_circles_upper.extend(mixed_circles_upper[0])
@@ -130,7 +128,7 @@ def main(img_num):
             y_centers.append(y)
             last_y = y
 
-    unique_y_list = [0] * 4
+    unique_y_list = [0] * 10  # when that num was 4 it caused a bug
 
     last_y = int(y_centers[0])
     c = 0
@@ -147,6 +145,7 @@ def main(img_num):
             c = c + 1
             unique_y_list[c] = unique_y_list[c] + 1
 
+    unique_y_list = [y for y in unique_y_list if y > 1]
     gender = "no gender"
     if unique_y_list[0] == 3:
         gender_xVals = x_centers[0:3]
@@ -157,11 +156,15 @@ def main(img_num):
             gender = "Male"
 
     def firstDuplicate(a):
-        set_ = set()
-        for item in a:
-            if item in set_:
-                return item
-            set_.add(item)
+        differnce_between_elements = np.diff(a)
+        for i, element_diff in enumerate(differnce_between_elements):
+            if abs(element_diff) < 5:
+                return i
+        # set_ = set()
+        # for item in a:
+        #     if item in set_:
+        #         return item
+        #     set_.add(item)
         return None
 
     semester = "no semester"
@@ -169,14 +172,14 @@ def main(img_num):
         val1 = unique_y_list[0]
         semster_xVals = x_centers[val1:val1 + 4]
         semster_xVals.sort(key=lambda circle: circle)
-        duplicate = firstDuplicate(semster_xVals)
+        duplicate_index = firstDuplicate(semster_xVals)
 
-        semster_xVals.remove(duplicate)
-        if duplicate == semster_xVals[0]:
+        semster_xVals.remove(semster_xVals[duplicate_index])
+        if duplicate_index == 0:
             semester = "Fall"
-        if duplicate == semster_xVals[1]:
+        if duplicate_index == 1:
             semester = "Spring"
-        if duplicate == semster_xVals[2]:
+        if duplicate_index == 2:
             semester = "Summer"
 
     if unique_y_list[2] + unique_y_list[3] == 12:
@@ -215,7 +218,7 @@ test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", 
 
 class TestAnswers(unittest.TestCase):
     def tests(self):
-        for i in range(8, 12):
+        for i in range(1, 12):
             with self.subTest(i=i):
                 self.assertEqual(main(i), test_ans[i - 1])
 
