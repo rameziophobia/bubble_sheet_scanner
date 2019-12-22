@@ -31,7 +31,8 @@ def main(img_num):
 
     print(angle)
     if 2 < abs(angle) < 178:
-        src = imutils.rotate(src, angle)
+        angle = angle + 180 if abs(angle) < 5 else angle
+        src = imutils.rotate(src, angle + 180)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)
     # cv2.namedWindow("gray", cv2.WINDOW_NORMAL)
