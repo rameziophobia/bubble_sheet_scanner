@@ -62,6 +62,12 @@ def main(img_num):
 
     def get_centers_y_sorted(circles):
         if circles is not None:
+            # for x, y, radius in circles:
+            #     center = (x, y)
+            #     # circle center
+            #     cv2.circle(img_display, center, 1, (0, 100, 100), 3)
+            #     # circle outline
+            #     cv2.circle(img_display, center, radius, (255, 0, 255), 3)
             return sorted([center[1] for center in circles])
 
     all_circles_questions = []
