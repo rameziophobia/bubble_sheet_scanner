@@ -1,16 +1,39 @@
 import cv2
 import numpy as np
 import math
+import imutils
 import unittest
 
 ROW_DIFF = np.uint16(15)
+LOWER_RED = np.array([160, 50, 50])
+UPPER_RED = np.array([180, 255, 255])
+
+
+def get_vertex_count(cnt):
+    peri = cv2.arcLength(cnt, True)
+    approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+    return len(approx)
 
 
 def main(img_num):
     src = cv2.imread(f"tests/test_sample{img_num}.jpg", 1)
+    hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, LOWER_RED, UPPER_RED)
+    _, thresh_red = cv2.threshold(mask, 127, 255, 0)
+    contours, _ = cv2.findContours(thresh_red, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours_rect = [c for c in contours if get_vertex_count(c) == 4]
+    largest_square_contour = sorted(contours_rect, key=cv2.contourArea, reverse=True)[0]
+    _, (width, height), angle = cv2.minAreaRect(largest_square_contour)
+    # x, y, w, h = cv2.boundingRect(contours[0])
+    # make the angle in the [0, 180) range *-ve
+    if width < height:
+        angle = angle - 90
+
+    print(angle)
+    if 2 < abs(angle) < 178:
+        src = imutils.rotate(src, angle)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-    contours, hierarchy = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    ret, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)
     # cv2.namedWindow("gray", cv2.WINDOW_NORMAL)
     # cv2.imshow("gray", thresh)
     circle_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
