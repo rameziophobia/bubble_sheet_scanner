@@ -10,7 +10,6 @@ LOWER_RED = np.array([160, 50, 50])
 UPPER_RED = np.array([180, 255, 255])
 
 
-
 def get_vertex_count(cnt):
     peri = cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -26,7 +25,6 @@ def main(img_num):
     contours_rect = [c for c in contours if get_vertex_count(c) == 4]
     largest_square_contour = sorted(contours_rect, key=cv2.contourArea, reverse=True)[0]
     _, (width, height), angle = cv2.minAreaRect(largest_square_contour)
-    # x, y, w, h = cv2.boundingRect(contours[0])
     # make the angle in the [0, 180) range *-ve
     if width < height:
         angle = angle - 90
@@ -36,8 +34,6 @@ def main(img_num):
         src = imutils.rotate(src, angle + 180)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)
-    # cv2.namedWindow("gray", cv2.WINDOW_NORMAL)
-    # cv2.imshow("gray", thresh)
     circle_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
     eroded_thresh = cv2.erode(thresh, circle_kernel)
 
@@ -64,12 +60,6 @@ def main(img_num):
 
     def get_centers_y_sorted(circles):
         if circles is not None:
-            # for x, y, radius in circles:
-            #     center = (x, y)
-            #     # circle center
-            #     cv2.circle(img_display, center, 1, (0, 100, 100), 3)
-            #     # circle outline
-            #     cv2.circle(img_display, center, radius, (255, 0, 255), 3)
             return sorted([center[1] for center in circles])
 
     all_circles_questions = []
@@ -107,11 +97,9 @@ def main(img_num):
         else:
             answers.append("Unanswered")
 
-
-
-    eroded_thresh_upper = eroded_thresh[225:height // 4 -30] # crop more to avoid detection of example's circle
+    eroded_thresh_upper = eroded_thresh[225:height // 4 - 30]  # crop more to avoid detection of example's circle
     thresh_upper = thresh[225:height // 4 - 30]
-    img_display = src[225:height // 4 -30]
+    img_display = src[225:height // 4 - 30]
 
     black_circles_upper = cv2.HoughCircles(eroded_thresh_upper, cv2.HOUGH_GRADIENT, 1, 10,
                                            param1=10, param2=11,
@@ -128,16 +116,16 @@ def main(img_num):
             circles = np.uint16(np.around(circles))
             # print(type(circles))
             for x, y, radius in circles[0, :]:
-                #all_centers_XandY.append((x, y))
-              #  print(f"x {x}, y {y}")
+                # all_centers_XandY.append((x, y))
+                #  print(f"x {x}, y {y}")
                 center = (x, y)
                 # circle center
                 cv2.circle(img_display, center, 1, (0, 100, 100), 3)
                 # circle outline
                 cv2.circle(img_display, center, radius, (255, 0, 255), 3)
+
     # loop_circles(black_circles_upper)
     # loop_circles(mixed_circles_upper)
-
 
     # if(img_num ==8 ):
     #       cv2.imshow(f"test_sample{img_num}.jpg",img_display)
@@ -149,11 +137,11 @@ def main(img_num):
     x_centers = [(round(center[0])) for center in centers_sorted_by_y]
     # print(x_centers) #contains the x coord of all circles sorted by y
     centers_sorted_by_y = [(center[1]) for center in centers_sorted_by_y]
-    #print(centers_sorted_by_y) #now it contains the y-coord of all circles sorted
+    # print(centers_sorted_by_y) #now it contains the y-coord of all circles sorted
 
     last_y = 0
 
-    #this loop extracts the y-vals of the different ans sets
+    # this loop extracts the y-vals of the different ans sets
 
     for y in centers_sorted_by_y:
         y_diff = y - last_y
@@ -162,7 +150,7 @@ def main(img_num):
         else:
             y_centers.append(y)
             last_y = y
-   # print(y_centers)
+    # print(y_centers)
     unique_y_list = [0] * 10  # when that num was 4 it caused a bug     # ok Ramez, thanks for the comment :)
 
     last_y = int(y_centers[0])
@@ -171,7 +159,7 @@ def main(img_num):
     intcenters = np.array(centers_sorted_by_y)
     intcenters = intcenters.astype(int)
 
-    #this loop extracts the number of circles in each set of ans
+    # this loop extracts the number of circles in each set of ans
     for y in intcenters:
         diff = y - last_y
         if diff < 5:
@@ -183,9 +171,8 @@ def main(img_num):
     # print(unique_y_list,"test: ", img_num)
     unique_y_list = [y for y in unique_y_list if y > 1]
 
-
     gender = "Unanswered"
-    if unique_y_list[0] == 3: # if there is 3 circle in the first line then the q is ansered
+    if unique_y_list[0] == 3:  # if there is 3 circle in the first line then the q is ansered
         gender_xVals = x_centers[0:3]
         gender_xVals.sort(key=lambda circle: circle)
         if gender_xVals[1] == gender_xVals[2]:
@@ -198,67 +185,53 @@ def main(img_num):
         for i, element_diff in enumerate(differnce_between_elements):
             if abs(element_diff) < 5:
                 return i
-        # set_ = set()
-        # for item in a:
-        #     if item in set_:
-        #         return item
-        #     set_.add(item)
         return None
 
+    semesters = ["Fall", "Spring", "Summer"]
     semester = "Unanswered"
     if unique_y_list[1] == 4:
         val1 = unique_y_list[0]
         semster_xVals = x_centers[val1:val1 + 4]
         semster_xVals.sort(key=lambda circle: circle)
         duplicate_index = firstDuplicate(semster_xVals)
-       # print(duplicate_index)
-        for i in range(len(semster_xVals)-1) :
-           # print(abs(semster_xVals[i] - semster_xVals[i+1]) <5)
-            if(abs(semster_xVals[i] - semster_xVals[i+1]) <5):
-                semster_xVals[i] = semster_xVals[i+1]
-      #  print(semster_xVals)
+        # print(duplicate_index)
+        for i in range(len(semster_xVals) - 1):
+            # print(abs(semster_xVals[i] - semster_xVals[i+1]) <5)
+            if abs(semster_xVals[i] - semster_xVals[i + 1]) < 5:
+                semster_xVals[i] = semster_xVals[i + 1]
+        #  print(semster_xVals)
         semster_xVals.remove(semster_xVals[duplicate_index])
-       # print(semster_xVals)
-        if duplicate_index == 0:
-            semester = "Fall"
-        if duplicate_index == 1:
-            semester = "Spring"
-        if duplicate_index == 2:
-            semester = "Summer"
+        # print(semster_xVals)
+        if duplicate_index is not None and duplicate_index < 3:
+            semester = semesters[duplicate_index]
 
     program = "Unanswered"
     if unique_y_list[2] + unique_y_list[3] == 12:
-        program_xVals = x_centers[unique_y_list[0] + unique_y_list[1]  :] #-1 hena removed(solved bug in program x vals)
+        program_xVals = x_centers[unique_y_list[0] + unique_y_list[1]:]  # -1 hena removed(solved bug in program x vals)
 
-        xtest= []
         xtest = x_centers
-        xtest.sort(key=lambda circle:circle)
-        #print(xtest)
+        xtest.sort(key=lambda circle: circle)
+        # print(xtest)
         program_xVals.sort(key=lambda circle: circle)
         # print(program_xVals)
 
-        if(len(program_xVals) >12): # akbar men 12 and not betenn 456 and 1256???
+        if len(program_xVals) > 12:  # akbar men 12 and not between 456 and 1256???
             program = "Unanswered"
         else:
             right_ans_program_xVals = program_xVals[8:]
             dup_index = firstDuplicate(right_ans_program_xVals)
             # print(dup_index)
-            if(dup_index ==0):
-                program = "ERGY"
-            elif(dup_index ==1):
-                program = "COMM"
-            elif(dup_index ==2):
-                program = "MANF"
-            else: # *insert crying cat pic here*
+            right_side_programs = ["ERGY", "COMM", "MANF"]
+            if dup_index is not None and dup_index < 3:
+                program = right_side_programs[dup_index]
+            else:
                 input = program_xVals[0:9]
                 n = 3
                 prev = -1
                 count = 0
-                flag = 0
-                index =0
+                index = 0
 
-                # Iterating
-                for idx,item in enumerate(input):
+                for idx, item in enumerate(input):
                     if abs(item - prev) < 10:
                         count = count + 1
                         index = idx
@@ -267,74 +240,64 @@ def main(img_num):
 
                     prev = item
 
+                    left_side_upper_programs = ["LAAR", "MATL", "CISE", "HAUD"]
+                    left_side_lower_programs = ["MCTA", "ENVER", "BLDG", "CESS"]
                     if count == n:
-                        flag = 1
                         index = index - 2
-                       ##un comment this print("There are {} occurrences of {} in index {} in {} in sample {} ".format(n, item, index, input,img_num))
-                        if(unique_y_list[3] ==5 and unique_y_list[2] == 7):
-                            if(index ==0):
-                                program = "LAAR"
-                            elif(index ==2):
-                                program = "MATL"
-                            elif (index == 4):
-                                program = "CISE"
-                            elif (index == 6):
-                                program = "HAUD"
-                        elif (unique_y_list[3] == 4 and unique_y_list[2] == 8):
-                            if (index == 0):
-                                program = "MCTA"
-                            elif (index == 2):
-                                program = "ENVER"
-                            elif (index == 4):
-                                program = "BLDG"
-                            elif (index == 6):
-                                program = "CESS"
+                        print("There are {} occurrences of {} in index {} in {} in sample {} ".format(n, item, index, input,img_num))
+                        if unique_y_list[3] == 5 and unique_y_list[2] == 7:
+                            program = left_side_upper_programs[index // 2]
+                        elif unique_y_list[3] == 4 and unique_y_list[2] == 8:
+                            program = left_side_lower_programs[index // 2]
                         else:
                             program = "Unanswered"
-
                         break
-
 
     answers.extend([gender, semester, program])
     questions_Sets = [5, 6, 3, 3, 2]
     with open('Output.txt', 'a') as outfile:
         json.dump(f"test_sample{img_num}.jpg", outfile, indent=4)
-        c=0
+        c = 0
         for i in range(5):
             for j in range(questions_Sets[i]):
-                #print(c)
-                json.dump({f"Q{i+1}.{j+1}": answers[c]}, outfile, indent=0)
-                c=c+1
+                # print(c)
+                json.dump({f"Q{i + 1}.{j + 1}": answers[c]}, outfile, indent=0)
+                c = c + 1
         json.dump({f"Gender: ": answers[19]}, outfile, indent=0)
         json.dump({f"Semester: ": answers[20]}, outfile, indent=0)
         json.dump({f"Program: ": answers[21]}, outfile, indent=2)
 
-
     return answers
 
 
-test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],#1
-            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Summer", "MANF"], #2
-            [2, 1, 3, 4, 2, 4, 4, 4, 2, 2, 1, 2, 1, 3, 1, 4, 3, 1, 2, "Male", "Summer", "HAUD"],#3
-            [1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 2, 2, 2, 4, 4, 4, 2, 2, "Male", "Fall", "MATL"],#4
-            [1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 2, 1, 2, 3, 4, 5, 4, 2, 1, "Male", "Fall", "ENVER"],#5
-            [2, 3, 3, 2, 5, 5, 4, 1, 2, 1, 1, 1, 2, 4, 4, 1, 2, 2, 2, "Female", "Fall", "BLDG"],#6
-            [1, 3, 4, 1, 3, 2, 4, 3, 2, 3, 4, 5, 1, 5, 3, 1, 4, 1, 3, "Female", "Fall", "BLDG"],#7
-            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Fall", "BLDG"], # 8 # rotation
-            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Male", "Spring", "COMM"],  #9 # rotation
-            [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1, "Female", "Summer", "ERGY"],# 10
-            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],# 11
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Fall", "ERGY"], # added test 12, same as test 1, but removed gender lol, next transgender test
-            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Unanswered", "MANF"], #test 13, same as test 2, but removed sem
-            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Unanswered", "Unanswered", "COMM"], # test 14, same as test 9 but removed gender and sem
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"], # multiple sem
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"], #multiple sem
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Unanswered", "Unanswered"], # multiple gen and sem
-            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Unanswered", "Unanswered"]] # multiple programs
+test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],  # 1
+            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Summer", "MANF"],  # 2
+            [2, 1, 3, 4, 2, 4, 4, 4, 2, 2, 1, 2, 1, 3, 1, 4, 3, 1, 2, "Male", "Summer", "HAUD"],  # 3
+            [1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 2, 2, 2, 4, 4, 4, 2, 2, "Male", "Fall", "MATL"],  # 4
+            [1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 2, 1, 2, 3, 4, 5, 4, 2, 1, "Male", "Fall", "ENVER"],  # 5
+            [2, 3, 3, 2, 5, 5, 4, 1, 2, 1, 1, 1, 2, 4, 4, 1, 2, 2, 2, "Female", "Fall", "BLDG"],  # 6
+            [1, 3, 4, 1, 3, 2, 4, 3, 2, 3, 4, 5, 1, 5, 3, 1, 4, 1, 3, "Female", "Fall", "BLDG"],  # 7
+            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Fall", "BLDG"],  # 8 # rotation
+            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Male", "Spring", "COMM"],  # 9 # rotation
+            [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1, "Female", "Summer", "ERGY"],  # 10
+            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],  # 11
+            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Fall", "ERGY"],
+            # added test 12, same as test 1, but removed gender
+            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Unanswered", "MANF"],
+            # test 13, same as test 2, but removed semester
+            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Unanswered", "Unanswered", "COMM"],
+            # test 14, same as test 9 but removed gender and semester
+            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"],  # multiple sem
+            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"],  # multiple sem
+            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Unanswered", "Unanswered"],
+            # multiple gender and semesters
+            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Unanswered",
+             "Unanswered"]]  # multiple programs
+
 
 class TestAnswers(unittest.TestCase):
     def tests(self):
-        for i in range(1, 12+3+3+1): # added 3+3+1 more tests, and guess whatttttt!!!. they all worked fine :).
+        for i in range(1, 12 + 7):  # added 3+3+1 more tests, and guess whatttttt!!!. they all worked fine :).
             with self.subTest(i=i):
                 self.assertEqual(main(i), test_ans[i - 1])
 
