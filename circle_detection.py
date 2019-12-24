@@ -10,6 +10,7 @@ LOWER_RED = np.array([160, 50, 50])
 UPPER_RED = np.array([180, 255, 255])
 
 
+
 def get_vertex_count(cnt):
     peri = cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -106,9 +107,11 @@ def main(img_num):
         else:
             answers.append("Unanswered")
 
-    eroded_thresh_upper = eroded_thresh[0:height // 4]
-    thresh_upper = thresh[0:height // 4 - 20]
-    img_display = src[0:height // 4]
+
+
+    eroded_thresh_upper = eroded_thresh[225:height // 4 -20]
+    thresh_upper = thresh[225:height // 4 - 20]
+    img_display = src[225:height // 4 -20]
 
     black_circles_upper = cv2.HoughCircles(eroded_thresh_upper, cv2.HOUGH_GRADIENT, 1, 10,
                                            param1=10, param2=11,
@@ -120,13 +123,36 @@ def main(img_num):
     all_circles_upper.extend(black_circles_upper[0])
     all_circles_upper.extend(mixed_circles_upper[0])
 
+    def loop_circles(circles):  # I added this method for debugging, please don't remove it ramez.
+        if circles is not None:
+            circles = np.uint16(np.around(circles))
+            # print(type(circles))
+            for x, y, radius in circles[0, :]:
+                #all_centers_XandY.append((x, y))
+                # print(f"x {x}, y {y}")
+                center = (x, y)
+                # circle center
+                cv2.circle(img_display, center, 1, (0, 100, 100), 3)
+                # circle outline
+                cv2.circle(img_display, center, radius, (255, 0, 255), 3)
+    # loop_circles(black_circles_upper)
+    # loop_circles(mixed_circles_upper)
+
+   # if(img_num ==9):
+    #    cv2.imshow(f"test_sample{img_num}.jpg",img_display)
+    #    cv2.waitKey(0)
+
     centers_sorted_by_y = sorted(get_circle_centers(all_circles_upper), key=lambda center: center[1])
 
     y_centers = []
     x_centers = [(round(center[0])) for center in centers_sorted_by_y]
     centers_sorted_by_y = [(center[1]) for center in centers_sorted_by_y]
 
+
     last_y = 0
+
+    #this loop extracts the y-vals of the different ans sets
+
     for y in centers_sorted_by_y:
         y_diff = y - last_y
         if y_diff < ROW_DIFF:
@@ -135,7 +161,7 @@ def main(img_num):
             y_centers.append(y)
             last_y = y
 
-    unique_y_list = [0] * 10  # when that num was 4 it caused a bug
+    unique_y_list = [0] * 10  # when that num was 4 it caused a bug     # ok Ramez, thanks for the comment :) # i dont even remember the purpose of this line
 
     last_y = int(y_centers[0])
     c = 0
@@ -143,6 +169,7 @@ def main(img_num):
     intcenters = np.array(centers_sorted_by_y)
     intcenters = intcenters.astype(int)
 
+    #this loop extracts the number of circles in each set of ans
     for y in intcenters:
         diff = y - last_y
         if diff < 5:
@@ -153,8 +180,10 @@ def main(img_num):
             unique_y_list[c] = unique_y_list[c] + 1
 
     unique_y_list = [y for y in unique_y_list if y > 1]
+
+
     gender = "no gender"
-    if unique_y_list[0] == 3:
+    if unique_y_list[0] == 3: # if there is 3 circle in the first line then the q is ansered
         gender_xVals = x_centers[0:3]
         gender_xVals.sort(key=lambda circle: circle)
         if gender_xVals[1] == gender_xVals[2]:
@@ -181,7 +210,13 @@ def main(img_num):
         semster_xVals.sort(key=lambda circle: circle)
         duplicate_index = firstDuplicate(semster_xVals)
 
+        for i in range(len(semster_xVals)-1) :
+           # print(abs(semster_xVals[i] - semster_xVals[i+1]) <5)
+            if(abs(semster_xVals[i] - semster_xVals[i+1]) <5):
+                semster_xVals[i] = semster_xVals[i+1]
+      #  print(semster_xVals)
         semster_xVals.remove(semster_xVals[duplicate_index])
+       # print(semster_xVals)
         if duplicate_index == 0:
             semester = "Fall"
         if duplicate_index == 1:
@@ -222,12 +257,13 @@ test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", 
             [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Fall"],  # rotation
             [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Male", "Spring"],  # rotation
             [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1, "Female", "Summer"],
-            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall"]]
-
-
+            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall"],
+            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "no gender", "Fall"], # added test 12, same as test 1, but removed gender lol, next transgender test
+            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "no semester"], #test 13, same as test 2, but removed sem
+            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "no gender", "no semester"]] # test 14, same as test 9 but removed gender and sem
 class TestAnswers(unittest.TestCase):
     def tests(self):
-        for i in range(1, 12):
+        for i in range(1, 12+3): # added 3 more test, and guess whatttttt!!!. they all worked fine :).
             with self.subTest(i=i):
                 self.assertEqual(main(i), test_ans[i - 1])
 
