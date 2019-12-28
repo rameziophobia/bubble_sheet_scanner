@@ -2,16 +2,20 @@ import cv2
 import numpy as np
 import math
 import imutils
-import unittest
 import json
+import argparse
+import os
 
 ROW_DIFF = np.uint16(15)
 LOWER_RED = np.array([160, 50, 50])
 UPPER_RED = np.array([180, 255, 255])
+img_num = 0
 
 
-def main(img_num):
-    src = cv2.imread(f"tests/test_sample{img_num}.jpg", 1)
+def main(img_path):
+    global img_num
+    img_num += 0
+    src = cv2.imread(f"{img_path}", 1)
     src = rotate_img(src)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY_INV)
@@ -21,11 +25,16 @@ def main(img_num):
     answers = extract_question_answers(eroded_thresh, thresh)
     gender, program, semester = extract_upper_answers(eroded_thresh, img_num, src, thresh)
     answers.extend([gender, semester, program])
-    write_answers_to_json(answers, gender, img_num, program, semester)
-    return answers
+    answers_dict = get_ans_dict_from_list(answers, gender, img_num, program, semester)
+    return answers, answers_dict
 
 
-def write_answers_to_json(answers, gender, img_num, program, semester):
+def write_answers_to_json(answers_dict):
+    with open('Output.json', 'w') as outfile:
+        json.dump(answers_dict, outfile, indent=4)
+
+
+def get_ans_dict_from_list(answers, gender, img_num, program, semester):
     questions_num_per_set = [5, 6, 3, 3, 2]
     answers_dict = {"test_sample": img_num,
                     "gender": gender,
@@ -37,8 +46,7 @@ def write_answers_to_json(answers, gender, img_num, program, semester):
             continue
         answers_dict[f"Questions Set{i}"] = \
             answers[questions_num_per_set[i - 1]: questions_num_per_set[i - 1] + questions_num_per_set[i]]
-    with open('Output.json', 'a') as outfile:
-        json.dump(answers_dict, outfile, indent=4)
+    return answers_dict
 
 
 def get_vertex_count(cnt):
@@ -72,7 +80,8 @@ def first_duplicate_index(a):
 
 def extract_upper_answers(eroded_thresh, img_num, src, thresh):
     all_circles_upper = get_upper_circles(eroded_thresh, src, thresh, img_num)
-    x_centers_sorted_by_y, y_centers_sorted_by_y = zip(*sorted(get_circle_centers(all_circles_upper), key=lambda center: center[1]))
+    x_centers_sorted_by_y, y_centers_sorted_by_y = zip(
+        *sorted(get_circle_centers(all_circles_upper), key=lambda center: center[1]))
     x_centers_sorted_by_y, y_centers_sorted_by_y = list(x_centers_sorted_by_y), list(y_centers_sorted_by_y)
     y_centers = []
     last_y = 0
@@ -168,6 +177,8 @@ def extract_question_answers(eroded_thresh, thresh):
 
 
 SEMESTERS = ["Fall", "Spring", "Summer"]
+
+
 def extract_semester(unique_y_list, x_centers):
     semester = "Unanswered"
     if unique_y_list[1] == 4:
@@ -280,31 +291,6 @@ def draw_circles_on_img(circles, img_display):  # for debugging
             cv2.circle(img_display, center, radius, (255, 0, 255), 3)
 
 
-test_ans = [[4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],  # 1
-            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Summer", "MANF"],  # 2
-            [2, 1, 3, 4, 2, 4, 4, 4, 2, 2, 1, 2, 1, 3, 1, 4, 3, 1, 2, "Male", "Summer", "HAUD"],  # 3
-            [1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 2, 2, 2, 4, 4, 4, 2, 2, "Male", "Fall", "MATL"],  # 4
-            [1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 2, 1, 2, 3, 4, 5, 4, 2, 1, "Male", "Fall", "ENVER"],  # 5
-            [2, 3, 3, 2, 5, 5, 4, 1, 2, 1, 1, 1, 2, 4, 4, 1, 2, 2, 2, "Female", "Fall", "BLDG"],  # 6
-            [1, 3, 4, 1, 3, 2, 4, 3, 2, 3, 4, 5, 1, 5, 3, 1, 4, 1, 3, "Female", "Fall", "BLDG"],  # 7
-            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Fall", "BLDG"],  # 8 # rotation
-            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Male", "Spring", "COMM"],  # 9 # rotation
-            [5, 1, 4, 2, 4, 2, 4, 1, 3, 2, 3, 3, 2, 1, 4, 3, 1, 4, 1, "Female", "Summer", "ERGY"],  # 10
-            [4, 1, 4, 2, 1, 2, 5, 4, 'Unanswered', 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Fall", "ERGY"],  # 11
-            # added test 12, same as test 1, but removed gender
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Fall", "ERGY"],
-            # test 13, same as test 2, but removed semester
-            [3, 1, 3, 1, 2, 4, 4, 4, 2, 2, 1, 3, 1, 2, 1, 4, 1, 3, 2, "Male", "Unanswered", "MANF"],
-            # test 14, same as test 9 but removed gender and semester
-            [1, 1, 2, 1, 2, 4, 3, 4, 3, 2, 2, 3, 3, 3, 2, 3, 2, 3, 1, "Unanswered", "Unanswered", "COMM"],
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"],  # multiple sem
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Female", "Unanswered", "ERGY"],  # multiple sem
-            [4, 1, 4, 2, 1, 2, 5, 4, 2, 4, 2, 2, 1, 4, 3, 1, 3, 1, 3, "Unanswered", "Unanswered", "Unanswered"],
-            # multiple gender and semesters
-            [4, 3, 4, 2, 3, 1, 5, 4, 1, 4, 2, 2, 1, 3, 3, 2, 3, 1, 2, "Female", "Unanswered",
-             "Unanswered"]]  # multiple programs
-
-
 def debug_imshow(black_circles_upper, img_display, img_num, mixed_circles_upper):
     draw_circles_on_img(black_circles_upper, img_display)
     draw_circles_on_img(mixed_circles_upper, img_display)
@@ -313,12 +299,27 @@ def debug_imshow(black_circles_upper, img_display, img_num, mixed_circles_upper)
         cv2.waitKey(0)
 
 
-class TestAnswers(unittest.TestCase):
-    def tests(self):
-        for i in range(1, 12 + 7):  # added 3+3+1 more tests, and guess whatttttt!!!. they all worked fine :).
-            with self.subTest(i=i):
-                self.assertEqual(main(i), test_ans[i - 1])
+def parse_arguments():
+    ap = argparse.ArgumentParser()
+    group = ap.add_mutually_exclusive_group(required=False)
+    group.add_argument("-f", "--img_folder", default="tests",
+                       help="usage: '-f path' please specify a folder path containing the images to be analyzed",
+                       type=str)
+    group.add_argument("-i", "--img_path", default="",
+                       help="usage: '-i path' please specify a full image path to analyze it",
+                       type=str)
+    return ap
 
 
 if __name__ == '__main__':
-    unittest.main()
+    arg_parser = parse_arguments()
+    args = vars(arg_parser.parse_args())
+    folder_path = args["img_folder"]
+    img_path = args["img_path"]
+    if img_path != "":
+        write_answers_to_json(main(img_path)[1])
+    else:
+        answers_dicts = []
+        for filename in os.listdir(folder_path):
+            answers_dicts.append(main(f"{folder_path}/{filename}")[1])
+        write_answers_to_json(answers_dicts)

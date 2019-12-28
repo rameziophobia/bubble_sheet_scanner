@@ -30,4 +30,4 @@ class TestAnswers(unittest.TestCase):
     def tests(self):
         for i in range(1, 12 + 7):  # added 3+3+1 more tests, and guess whatttttt!!!. they all worked fine :).
             with self.subTest(i=i):
-                self.assertEqual(main(f"tests/test_sample{i}.jpg"), test_ans[i - 1])
+                self.assertEqual(main(f"tests/test_sample{i}.jpg")[0], test_ans[i - 1])
