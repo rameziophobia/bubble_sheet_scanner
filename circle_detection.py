@@ -14,7 +14,7 @@ img_num = 0
 
 def main(img_path):
     global img_num
-    img_num += 0
+    img_num += 1
     src = cv2.imread(f"{img_path}", 1)
     src = rotate_img(src)
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
@@ -25,7 +25,7 @@ def main(img_path):
     answers = extract_question_answers(eroded_thresh, thresh)
     gender, program, semester = extract_upper_answers(eroded_thresh, img_num, src, thresh)
     answers.extend([gender, semester, program])
-    answers_dict = get_ans_dict_from_list(answers, gender, img_num, program, semester)
+    answers_dict = get_ans_dict_from_list(answers, gender, img_path, program, semester)
     return answers, answers_dict
 
 
@@ -34,9 +34,9 @@ def write_answers_to_json(answers_dict):
         json.dump(answers_dict, outfile, indent=4)
 
 
-def get_ans_dict_from_list(answers, gender, img_num, program, semester):
+def get_ans_dict_from_list(answers, gender, img_path, program, semester):
     questions_num_per_set = [5, 6, 3, 3, 2]
-    answers_dict = {"test_sample": img_num,
+    answers_dict = {"img_name": os.path.split(img_path)[1],
                     "gender": gender,
                     "semester": semester,
                     "program": program,
@@ -301,8 +301,8 @@ def debug_imshow(black_circles_upper, img_display, img_num, mixed_circles_upper)
 
 def parse_arguments():
     ap = argparse.ArgumentParser()
-    group = ap.add_mutually_exclusive_group(required=False)
-    group.add_argument("-f", "--img_folder", default="tests",
+    group = ap.add_mutually_exclusive_group(required=True)
+    group.add_argument("-f", "--img_folder", default="",
                        help="usage: '-f path' please specify a folder path containing the images to be analyzed",
                        type=str)
     group.add_argument("-i", "--img_path", default="",
